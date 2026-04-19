@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<!-- 
+  HTML Viewer File (viewer.html)
+  Purpose: Load remote XML and local XSLT, perform transformation, and display result.
+  Location: Local computer
+  Dependencies: style.xsl (local), remote XML file (URL provided in exam)
+  Note: Replace xmlURL with the actual remote XML address given in the exam.
+-->
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Scout Activity Badges Viewer</title>
+  <style>
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background: #f5f5f5; }
+    #output { max-width: 1200px; margin: 0 auto; }
+  </style>
+  <script type="text/javascript">
+    function display() {
+      // ============================================================
+      // During exam, change the xmlURL below to the remote XML URL provided by instructor
+      // Example: "http://mercury.swin.edu.au/xxxx/badges.xml"
+      // ============================================================
+      var xmlURL = "http://remote-server.example.com/badges.xml";   // [REPLACE WITH ACTUAL REMOTE XML URL]
+      var xmlstyleURL = "style.xsl";                                 // local XSLT stylesheet filename
+      
+      var request;
+      try {
+        if (window.XMLHttpRequest) {
+          request = new XMLHttpRequest();
+        } else {
+          request = new ActiveXObject("Microsoft.XMLHTTP");
+        }
+        
+        // 1. Load remote XML document (synchronous)
+        request.open("GET", xmlURL, false);
+        request.send();
+        var xmlDoc = request.responseXML;
+        
+        // 2. Load local XSLT stylesheet (synchronous)
+        request.open("GET", xmlstyleURL, false);
+        request.send();
+        var xslDoc = request.responseXML;
+        
+        // 3. Perform XSLT transformation and insert into page
+        if (window.ActiveXObject) {
+          // Internet Explorer
+          var result = xmlDoc.transformNode(xslDoc);
+          document.getElementById("output").innerHTML = result;
+        } else {
+          // Standard browsers (Chrome, Firefox, Edge, Safari)
+          var processor = new XSLTProcessor();
+          processor.importStylesheet(xslDoc);
+          var fragment = processor.transformToFragment(xmlDoc, document);
+          var outputDiv = document.getElementById("output");
+          while (outputDiv.firstChild) {
+            outputDiv.removeChild(outputDiv.firstChild);
+          }
+          outputDiv.appendChild(fragment);
+        }
+      } catch (err) {
+        alert("Transformation error: " + err.message + "\nPlease ensure:\n1. Remote XML URL is correct and allows cross-origin access\n2. style.xsl exists in the same directory\n3. XML format is valid");
+      }
+    }
+  </script>
+</head>
+<body onload="display()">
+  <div id="output">
+    <p style="text-align:center; margin-top:50px;">⏳ Loading badge data, please wait...</p>
+  </div>
+</body>
+</html>
