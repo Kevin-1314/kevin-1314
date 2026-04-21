@@ -1,71 +1,110 @@
 <!DOCTYPE html>
-<!-- 
-  HTML Viewer File (viewer.html)
-  Purpose: Load remote XML and local XSLT, perform transformation, and display result.
-  Location: Local computer
-  Dependencies: style.xsl (local), remote XML file (URL provided in exam)
-  Note: Replace xmlURL with the actual remote XML address given in the exam.
--->
 <html>
 <head>
-  <meta charset="UTF-8">
-  <title>Scout Activity Badges Viewer</title>
-  <style>
-    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background: #f5f5f5; }
-    #output { max-width: 1200px; margin: 0 auto; }
-  </style>
-  <script type="text/javascript">
-    function display() {
-      // ============================================================
-      // During exam, change the xmlURL below to the remote XML URL provided by instructor
-      // Example: "http://mercury.swin.edu.au/xxxx/badges.xml"
-      // ============================================================
-      var xmlURL = "https://kevin-1314.github.io/kevin-1314/xmloutcome3/";   // [REPLACE WITH ACTUAL REMOTE XML URL]
-      var xmlstyleURL = "style.xsl";                                 // local XSLT stylesheet filename
-      
-      var request;
-      try {
-        if (window.XMLHttpRequest) {
-          request = new XMLHttpRequest();
-        } else {
-          request = new ActiveXObject("Microsoft.XMLHTTP");
+    <meta charset="UTF-8">
+    <title>Scout Activity Badges Viewer</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+            margin: 0;
         }
-        
-        // 1. Load remote XML document (synchronous)
-        request.open("GET", xmlURL, false);
-        request.send();
-        var xmlDoc = request.responseXML;
-        
-        // 2. Load local XSLT stylesheet (synchronous)
-        request.open("GET", xmlstyleURL, false);
-        request.send();
-        var xslDoc = request.responseXML;
-        
-        // 3. Perform XSLT transformation and insert into page
-        if (window.ActiveXObject) {
-          // Internet Explorer
-          var result = xmlDoc.transformNode(xslDoc);
-          document.getElementById("output").innerHTML = result;
-        } else {
-          // Standard browsers (Chrome, Firefox, Edge, Safari)
-          var processor = new XSLTProcessor();
-          processor.importStylesheet(xslDoc);
-          var fragment = processor.transformToFragment(xmlDoc, document);
-          var outputDiv = document.getElementById("output");
-          while (outputDiv.firstChild) {
-            outputDiv.removeChild(outputDiv.firstChild);
-          }
-          outputDiv.appendChild(fragment);
+        #output {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
-      } catch (err) {
-        alert("Transformation error: " + err.message + "\nPlease ensure:\n1. Remote XML URL is correct and allows cross-origin access\n2. style.xsl exists in the same directory\n3. XML format is valid");
-      }
-    }
-  </script>
+        .error-message {
+            color: #d32f2f;
+            background: #ffebee;
+            padding: 15px;
+            border-radius: 5px;
+            border-left: 5px solid #d32f2f;
+            margin: 20px 0;
+        }
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+    </style>
+    <script type="text/javascript">
+        function display() {
+            // ============================================================
+            // 关键修复：指定完整的XML文件路径，而不是文件夹路径
+            // ============================================================
+            var baseURL = "https://kevin-1314.github.io/kevin-1314/xmloutcome3/";
+            var xmlURL = baseURL + "badges.xml";
+            var xslURL = baseURL + "style.xsl";
+
+            var outputDiv = document.getElementById("output");
+            outputDiv.innerHTML = '<div class="loading">⏳ Loading badge data, please wait...</div>';
+
+            try {
+                var request;
+                if (window.XMLHttpRequest) {
+                    request = new XMLHttpRequest();
+                } else {
+                    request = new ActiveXObject("Microsoft.XMLHTTP");
+                }
+
+                // 加载 XML
+                request.open("GET", xmlURL, false);
+                request.send();
+                if (request.status !== 200) {
+                    throw new Error("Failed to load XML file. Status: " + request.status);
+                }
+                var xmlDoc = request.responseXML;
+                if (!xmlDoc || xmlDoc.getElementsByTagName("parsererror").length > 0) {
+                    throw new Error("Invalid XML format");
+                }
+
+                // 加载 XSLT
+                request.open("GET", xslURL, false);
+                request.send();
+                if (request.status !== 200) {
+                    throw new Error("Failed to load XSLT file. Status: " + request.status);
+                }
+                var xslDoc = request.responseXML;
+                if (!xslDoc || xslDoc.getElementsByTagName("parsererror").length > 0) {
+                    throw new Error("Invalid XSLT format");
+                }
+
+                // 执行转换
+                if (window.ActiveXObject) {
+                    var result = xmlDoc.transformNode(xslDoc);
+                    outputDiv.innerHTML = result;
+                } else {
+                    var processor = new XSLTProcessor();
+                    processor.importStylesheet(xslDoc);
+                    while (outputDiv.firstChild) {
+                        outputDiv.removeChild(outputDiv.firstChild);
+                    }
+                    var fragment = processor.transformToFragment(xmlDoc, document);
+                    outputDiv.appendChild(fragment);
+                }
+            } catch (err) {
+                outputDiv.innerHTML = '<div class="error-message">' +
+                    '<strong>Error loading or transforming data:</strong><br>' +
+                    err.message + '<br><br>' +
+                    '<strong>Troubleshooting tips:</strong><br>' +
+                    '1. Make sure the files are in the correct GitHub Pages location<br>' +
+                    '2. Check if XML and XSLT files are accessible: <br>' +
+                    '   <a href="' + xmlURL + '" target="_blank">' + xmlURL + '</a><br>' +
+                    '   <a href="' + xslURL + '" target="_blank">' + xslURL + '</a><br>' +
+                    '3. Ensure the XML file has valid syntax<br>' +
+                    '4. Check browser console for more details (F12)' +
+                    '</div>';
+                console.error("Transformation error:", err);
+            }
+        }
+    </script>
 </head>
 <body onload="display()">
-  <div id="output">
-    <p style="text-align:center; margin-top:50px;">⏳ Loading badge data, please wait...</p>
-  </div>
+    <div id="output"></div>
 </body>
 </html>
