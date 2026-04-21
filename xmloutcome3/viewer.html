@@ -34,9 +34,7 @@
     </style>
     <script type="text/javascript">
         function display() {
-            // ============================================================
-            // 关键修复：指定完整的XML文件路径，而不是文件夹路径
-            // ============================================================
+
             var baseURL = "https://kevin-1314.github.io/kevin-1314/xmloutcome3/";
             var xmlURL = baseURL + "badges.xml";
             var xslURL = baseURL + "style.xsl";
@@ -52,7 +50,7 @@
                     request = new ActiveXObject("Microsoft.XMLHTTP");
                 }
 
-                // 加载 XML
+               
                 request.open("GET", xmlURL, false);
                 request.send();
                 if (request.status !== 200) {
@@ -63,7 +61,7 @@
                     throw new Error("Invalid XML format");
                 }
 
-                // 加载 XSLT
+              
                 request.open("GET", xslURL, false);
                 request.send();
                 if (request.status !== 200) {
@@ -74,7 +72,7 @@
                     throw new Error("Invalid XSLT format");
                 }
 
-                // 执行转换
+              
                 if (window.ActiveXObject) {
                     var result = xmlDoc.transformNode(xslDoc);
                     outputDiv.innerHTML = result;
